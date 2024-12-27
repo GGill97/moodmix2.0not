@@ -1,6 +1,8 @@
+// This file is used for TypeScript configuration
+// It is used to specify the root files and the compiler options required to compile the project.
 {
   "compilerOptions": {
-    "target": "ES2017",
+    "target": "es5",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,

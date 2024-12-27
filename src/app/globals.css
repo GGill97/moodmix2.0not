@@ -2,20 +2,111 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --font-display: "Playfair Display", "Georgia", serif;
+    --font-primary: "Inter", -apple-system, system-ui, sans-serif;
+
+    /* Color System */
+    --color-soft-brown: #8b7355;
+    --color-terracotta: #c17f59;
+    --color-sandy-beige: #f5e6d3;
+  }
+
+  /* Base Typography */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-display text-soft-brown;
+  }
+
+  body {
+    @apply font-primary text-soft-brown/80;
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+  .glass {
+    @apply bg-white/10 backdrop-blur-sm border border-white/10 
+           transition-all duration-300;
+  }
+
+  .glass-hover {
+    @apply hover:bg-white/15 hover:border-white/20;
+  }
+
+  .search-input {
+    @apply bg-white/10 backdrop-blur-sm border border-white/10
+           text-soft-brown placeholder:text-soft-brown/50
+           focus:outline-none focus:ring-2 focus:ring-white/20
+           transition-all duration-300;
+  }
+
+  .btn {
+    @apply px-4 py-2 rounded-full transition-all duration-300
+           font-medium text-sm;
+  }
+
+  .btn-primary {
+    @apply bg-terracotta/90 text-white 
+           hover:bg-terracotta;
+  }
+
+  .btn-secondary {
+    @apply bg-white/10 text-soft-brown/80 backdrop-blur-sm
+           hover:bg-white/20 border border-white/10;
+  }
+
+  /* Card variants */
+  .card-subtle {
+    @apply glass p-6 rounded-xl;
+  }
+
+  .card-hover {
+    @apply glass glass-hover p-6 rounded-xl cursor-pointer;
+  }
+
+  /* Text styles */
+  .text-display {
+    @apply font-display text-soft-brown;
+  }
+
+  .text-body {
+    @apply font-primary text-soft-brown/80;
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+/* Weather-specific styles */
+.weather-stat {
+  @apply p-4 rounded-xl bg-white/10 backdrop-blur-sm
+         border border-white/10 transition-all duration-300;
+}
+
+.weather-temp {
+  @apply font-display text-6xl text-soft-brown/90
+         tracking-tight leading-none;
+}
+
+.weather-condition {
+  @apply font-primary text-lg text-soft-brown/70
+         font-light;
 }
