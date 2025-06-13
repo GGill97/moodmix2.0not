@@ -1,7 +1,7 @@
 // src/app/api/auth/refresh/route.ts
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "../nextauth/[...nextauth]/route";
+import { authOptions } from "../[...nextauth]/route";
 
 export async function POST(req: Request) {
   try {
