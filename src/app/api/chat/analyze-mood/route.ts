@@ -1,60 +1,11 @@
-// src/app/api/chat/analyze-mood/route.ts
-import OpenAI from "openai";
+// src/app/api/chat/analyze-mood/route.ts - FIXED VERSION
 import { NextResponse } from "next/server";
+import OpenAI from "openai";
 import { getRecommendations } from "@/utils/spotifyApi";
-import type { MoodAnalysis, SpotifyTrack } from "@/types/chat";
-
-// Simplified type definitions
-type SpotifyGenre =
-  | "pop"
-  | "dance"
-  | "hip-hop"
-  | "party"
-  | "electronic"
-  | "happy"
-  | "energetic"
-  | "upbeat"
-  | "summer"
-  | "chill"
-  | "acoustic"
-  | "sad"
-  | "ambient"
-  | "melancholic"
-  | "jazz"
-  | "indie";
-
-const SPOTIFY_GENRES: SpotifyGenre[] = [
-  "pop",
-  "dance",
-  "hip-hop",
-  "party",
-  "electronic",
-  "happy",
-  "energetic",
-  "upbeat",
-  "summer",
-  "chill",
-  "acoustic",
-  "sad",
-  "ambient",
-  "melancholic",
-  "jazz",
-  "indie",
-];
-
-const WEATHER_GENRES: Record<string, SpotifyGenre[]> = {
-  "clear sky": ["pop", "happy", "summer"],
-  "few clouds": ["indie", "pop", "upbeat"],
-  "scattered clouds": ["chill", "electronic", "indie"],
-  "broken clouds": ["indie", "electronic", "ambient"],
-  "light rain": ["acoustic", "jazz", "melancholic"],
-  "moderate rain": ["ambient", "jazz", "melancholic"],
-  "heavy rain": ["electronic", "ambient", "melancholic"],
-  "overcast clouds": ["indie", "ambient", "electronic"],
-};
+import type { MoodAnalysis } from "@/types/chat";
 
 if (!process.env.OPENAI_API_KEY) {
-  console.error("OPENAI_API_KEY is not set");
+  throw new Error("OPENAI_API_KEY is missing in environment variables");
 }
 
 const openai = new OpenAI({
@@ -62,88 +13,125 @@ const openai = new OpenAI({
 });
 
 export async function POST(req: Request) {
-  try {
-    const { message, weatherDescription, location, spotifyAccessToken } =
-      await req.json();
+  console.log("🎭 Starting enhanced mood analysis");
 
-    if (!message) {
+  try {
+    const {
+      message,
+      weatherDescription,
+      location,
+      currentGenre,
+      spotifyAccessToken,
+      currentTracks,
+    } = await req.json().catch(() => ({}));
+
+    if (!message || !weatherDescription || !location) {
+      console.error("❌ Missing required fields");
       return NextResponse.json(
-        { error: "Message is required" },
+        { error: "Please provide all required information" },
         { status: 400 }
       );
     }
 
-    const prompt = `As a music expert, analyze this message: "${message}"
-Current context: Weather is ${weatherDescription} in ${location}.
+    // IMPROVED PROMPT - More explicit about when to refresh playlist
+    const prompt = `You are MoodMix AI, a music expert assistant. Analyze this user message and respond appropriately.
 
-Your task is to understand if the user wants to:
-1. Keep the weather-based playlist
-2. Get a new playlist based on their mood
+User message: "${message}"
+Context: Weather is ${weatherDescription} in ${location}
+Current genre: ${currentGenre || "none"}
 
-Available genres: ${SPOTIFY_GENRES.join(", ")}
+CRITICAL RULES FOR shouldRefreshPlaylist:
 
-Provide an empathetic response and music recommendations that match their preference.
+SET shouldRefreshPlaylist: true FOR:
+- ANY request for new music ("play some rock", "I want happy music", "cookies playlist")
+- ANY mood requests ("upbeat music", "sad songs", "chill vibes")  
+- ANY activity requests ("study music", "workout playlist", "cooking music")
+- ANY genre requests ("indie rock", "jazz music", "electronic")
+- ANY artist-style requests ("music like Taylor Swift", "90s rock")
 
-Return in this JSON format:
+SET shouldRefreshPlaylist: false FOR:
+- Questions about current music ("who is this artist?", "what's this song about?")
+- General chat ("hello", "how are you?", "tell me about weather")
+- Requests for information only
+
+ACTIVITY TO GENRE MAPPING:
+- "cookies" = cozy indie, folk, acoustic
+- "study" = lo-fi, ambient, instrumental  
+- "workout" = electronic, pop, high energy
+- "cooking" = upbeat pop, indie rock
+- "cleaning" = dance, pop, energetic
+- "coffee" = chill indie, acoustic, jazz
+- "happy" = upbeat pop, indie pop
+- "sad" = indie folk, alternative, acoustic
+- "chill" = lo-fi, ambient, indie
+
+EXAMPLES:
+- "play some upbeat music" → shouldRefreshPlaylist: true, genres: ["upbeat pop", "indie pop"]
+- "I want indie rock" → shouldRefreshPlaylist: true, genres: ["indie rock"]
+- "who is this artist?" → shouldRefreshPlaylist: false, genres: []
+
+Return JSON format:
 {
-  "keepWeatherPlaylist": boolean,
-  "genres": string[],
-  "response": string,
-  "moodAnalysis": string,
-  "displayTitle": string
+  "response": "Your conversational response with emoji",
+  "genres": ["genre1", "genre2"], // MUST include genres if shouldRefreshPlaylist is true
+  "shouldRefreshPlaylist": boolean, // TRUE for music requests, FALSE for info requests
+  "keepCurrentGenre": boolean,
+  "requestType": "playlist_request" | "song_info" | "playlist_modify" | "general_chat",
+  "activityContext": "activity name if applicable",
+  "suggestedActions": ["action1", "action2"]
 }`;
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo-0125",
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0.7,
-      response_format: { type: "json_object" },
-    });
+    console.log("🤖 Requesting enhanced OpenAI analysis");
+    let completion;
+    try {
+      completion = await openai.chat.completions.create({
+        model: "gpt-3.5-turbo",
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.7, // Slightly lower for more consistent responses
+        response_format: { type: "json_object" },
+      });
+    } catch (error) {
+      console.error("❌ OpenAI API error:", error);
+      return NextResponse.json(
+        {
+          error:
+            "Sorry, having trouble analyzing your request. Please try again.",
+        },
+        { status: 503 }
+      );
+    }
 
     if (!completion.choices[0]?.message?.content) {
       throw new Error("Invalid response from OpenAI");
     }
 
-    const analysis = JSON.parse(completion.choices[0].message.content);
-
-    // Determine which genres to use based on user preference
-    const selectedGenres = analysis.keepWeatherPlaylist
-      ? WEATHER_GENRES[weatherDescription] || WEATHER_GENRES["clear sky"]
-      : analysis.genres.filter((genre: string) =>
-          SPOTIFY_GENRES.includes(genre as SpotifyGenre)
-        );
-
-    // Get Spotify recommendations if we have access token
-    if (spotifyAccessToken) {
-      try {
-        const recommendations = await getRecommendations(
-          spotifyAccessToken,
-          selectedGenres
-        );
-
-        return NextResponse.json({
-          ...analysis,
-          genres: selectedGenres,
-          recommendations,
-        });
-      } catch (error) {
-        console.error("Spotify API error:", error);
-        return NextResponse.json({
-          ...analysis,
-          genres: selectedGenres,
-          error: "Failed to get Spotify recommendations",
-        });
-      }
+    let analysis: MoodAnalysis;
+    try {
+      analysis = JSON.parse(completion.choices[0].message.content);
+      console.log("🎯 Analysis result:", analysis);
+    } catch (error) {
+      console.error("❌ JSON parsing error:", error);
+      return NextResponse.json(
+        { error: "Error processing the response. Please try again." },
+        { status: 500 }
+      );
     }
 
-    return NextResponse.json({
-      ...analysis,
-      genres: selectedGenres,
-    });
+    // FORCE REFRESH FOR MUSIC REQUESTS - Safety check
+    if (analysis.genres && analysis.genres.length > 0) {
+      analysis.shouldRefreshPlaylist = true;
+      console.log("🔄 Forcing playlist refresh due to genres present");
+    }
+
+    console.log("✅ Enhanced analysis complete");
+    return NextResponse.json(analysis);
   } catch (error) {
-    console.error("Error in mood analysis:", error);
+    console.error("❌ Unhandled error in mood analysis:", error);
     return NextResponse.json(
-      { error: "Failed to analyze mood" },
+      {
+        error: "Something went wrong. Please try again.",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
       { status: 500 }
     );
   }

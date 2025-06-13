@@ -1,3 +1,4 @@
+/*src/app/globals.css*/
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -110,3 +111,4 @@
   @apply font-primary text-lg text-soft-brown/70
          font-light;
 }
+

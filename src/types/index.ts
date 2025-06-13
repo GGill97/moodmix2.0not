@@ -1,25 +1,38 @@
 // src/types/index.ts
+export interface WeatherData {
+  main: {
+    temp: number;
+    feels_like: number;
+    humidity: number;
+  };
+  weather: Array<{
+    description: string;
+    icon: string;
+    main: string;
+    id: number;
+  }>;
+  wind: {
+    speed: number;
+  };
+  visibility: number;
+  name: string;
+}
+
 export interface ChatMessage {
   role: "user" | "assistant";
   content: string;
   timestamp: number;
 }
 
-export interface WeatherData {
+export interface SpotifyTrack {
+  id: string;
   name: string;
-  main: {
-    temp: number;
-    humidity: number;
-    feels_like: number;
+  artists: Array<{ name: string }>;
+  uri: string;
+  preview_url: string | null;
+  external_urls: {
+    spotify: string;
   };
-  weather: Array<{
-    description: string;
-    icon: string;
-  }>;
-  wind: {
-    speed: number;
-  };
-  visibility: number;
 }
 
 export interface MoodAnalysis {
@@ -32,13 +45,12 @@ export interface MoodAnalysis {
   recommendations?: SpotifyTrack[];
 }
 
-export interface SpotifyTrack {
-  id: string;
-  name: string;
-  artists: Array<{ name: string }>;
-  uri: string;
-  preview_url: string | null;
-  external_urls: {
-    spotify: string;
-  };
+export interface MoodMixChatProps {
+  onMoodAnalysis: (analysis: MoodAnalysis) => void;
+  location: string;
+  weatherDescription: string;
+  className?: string;
+  spotifyAccessToken?: string;
+  isMinimized?: boolean;
+  onExpand?: () => void;
 }

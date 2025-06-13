@@ -1,12 +1,13 @@
+//src/components/weather/WeatherDisplay.tsx
 "use client";
 
-import React, { useEffect } from "react";
+import React from "react";
 import { Thermometer, Droplets, Wind, Eye } from "lucide-react";
-import { useWeather } from "@/hooks/useWeather";
+import type { WeatherData } from "@/types/weather";
 
 interface WeatherDisplayProps {
-  location: string;
-  onWeatherUpdate?: (description: string) => void;
+  weatherData: WeatherData;
+  city: string;
 }
 
 interface WeatherStatProps {
@@ -16,36 +17,17 @@ interface WeatherStatProps {
 }
 
 const WeatherStat = ({ icon: Icon, label, value }: WeatherStatProps) => (
-  <div className="text-center space-y-2">
-    <Icon className="w-5 h-5 mx-auto text-soft-brown/40" />
+  <div className="text-center flex flex-col items-center space-y-1">
+    <Icon className="w-5 h-5 text-soft-brown/40" />
     <div className="text-sm text-soft-brown/60">{label}</div>
     <div className="text-soft-brown font-medium">{value}</div>
   </div>
 );
 
 export default function WeatherDisplay({
-  location,
-  onWeatherUpdate,
+  weatherData,
+  city,
 }: WeatherDisplayProps) {
-  const { data: weatherData, error } = useWeather(location);
-
-  useEffect(() => {
-    if (weatherData?.weather?.[0]?.description && onWeatherUpdate) {
-      onWeatherUpdate(weatherData.weather[0].description);
-    }
-  }, [weatherData, onWeatherUpdate]);
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-soft-brown/70 text-center">
-          <p>Unable to load weather data</p>
-          <p className="text-sm mt-2">{error.message}</p>
-        </div>
-      </div>
-    );
-  }
-
   if (!weatherData) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -65,11 +47,11 @@ export default function WeatherDisplay({
   }
 
   return (
-    <div className="h-full flex flex-col justify-between p-6">
-      {/* Top Section */}
-      <div className="text-center space-y-2">
+    <div className="flex flex-col h-full w-full">
+      {/* City and Date */}
+      <div className="text-center mb-2 md:mb-4">
         <h2 className="text-2xl font-display text-soft-brown">
-          Current Weather in {weatherData.name}
+          Current Weather in {weatherData.name || city}
         </h2>
         <p className="text-soft-brown/60 text-sm">
           {new Date().toLocaleString("en-US", {
@@ -81,18 +63,21 @@ export default function WeatherDisplay({
         </p>
       </div>
 
-      {/* Middle Section */}
-      <div className="text-center py-8">
-        <div className="font-display text-8xl text-soft-brown mb-2">
-          {Math.round(weatherData.main.temp)}°F
-        </div>
-        <div className="text-soft-brown/70 text-lg font-light capitalize">
-          {weatherData.weather[0].description}
+      {/* Main Content with flexible space */}
+      <div className="flex-grow flex flex-col justify-center">
+        {/* Temperature and Weather Description */}
+        <div className="text-center">
+          <div className="font-display text-7xl md:text-8xl text-soft-brown mb-1">
+            {Math.round(weatherData.main.temp)}°F
+          </div>
+          <div className="text-soft-brown/70 text-lg font-light capitalize">
+            {weatherData.weather[0].description}
+          </div>
         </div>
       </div>
 
-      {/* Bottom Section */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* Weather Stats Grid - Fixed Height */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-auto pt-4">
         <WeatherStat
           icon={Thermometer}
           label="Feels Like"
@@ -117,4 +102,3 @@ export default function WeatherDisplay({
     </div>
   );
 }
-// do not change anything in this file

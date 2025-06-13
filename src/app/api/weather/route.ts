@@ -1,4 +1,4 @@
-//src/app/api/weather/route.ts
+// src/app/api/weather/route.ts
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -8,8 +8,6 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const location = searchParams.get("location");
-
-    console.log("Weather API request for location:", location);
 
     if (!location) {
       return NextResponse.json(
@@ -27,48 +25,36 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Clean up the location string
     const cleanLocation = location.trim().replace(/\s+/g, " ");
     const encodedLocation = encodeURIComponent(cleanLocation);
 
-    console.log("Fetching coordinates for location:", cleanLocation);
-
-    // Get coordinates
-    const geoUrl = `http://api.openweathermap.org/geo/1.0/direct?q=${encodedLocation}&limit=1&appid=${OPENWEATHER_API_KEY}`;
+    // Changed to https
+    const geoUrl = `https://api.openweathermap.org/geo/1.0/direct?q=${encodedLocation}&limit=1&appid=${OPENWEATHER_API_KEY}`;
     const geoResponse = await fetch(geoUrl);
 
     if (!geoResponse.ok) {
-      const geoError = await geoResponse.text();
-      console.error("Geocoding API error:", geoError);
       throw new Error(`Geocoding failed: ${geoResponse.status}`);
     }
 
     const geoData = await geoResponse.json();
-    console.log("Geocoding response:", geoData);
 
     if (!geoData || geoData.length === 0) {
-      console.error("Location not found:", cleanLocation);
       return NextResponse.json(
         { error: "Location not found. Please try a different search term." },
         { status: 404 }
       );
     }
 
-    // Get weather data
     const { lat, lon } = geoData[0];
-    const weatherUrl = `http://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=imperial&appid=${OPENWEATHER_API_KEY}`;
-
-    console.log("Fetching weather data for coordinates:", { lat, lon });
+    // Changed to https
+    const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=imperial&appid=${OPENWEATHER_API_KEY}`;
 
     const weatherResponse = await fetch(weatherUrl);
     if (!weatherResponse.ok) {
-      const weatherError = await weatherResponse.text();
-      console.error("Weather API error:", weatherError);
       throw new Error(`Weather API failed: ${weatherResponse.status}`);
     }
 
     const weatherData = await weatherResponse.json();
-    console.log("Weather data retrieved successfully");
 
     return NextResponse.json(weatherData);
   } catch (error) {

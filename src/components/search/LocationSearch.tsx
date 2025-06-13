@@ -1,3 +1,5 @@
+//src/components/search/LocationSearch.tsx
+
 import React, { useState, useCallback, useEffect } from "react";
 import { Search, MapPin } from "lucide-react";
 import debounce from "lodash/debounce";
@@ -166,4 +168,3 @@ export default function LocationSearch({
     </div>
   );
 }
-//do not change anyhting

@@ -1,4 +1,4 @@
-// src/types/insights.ts
+// src/types/musicinsight.ts
 export interface CityInsight {
   funFact: string;
   knownFor: string;

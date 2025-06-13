@@ -1,8 +1,9 @@
+//src/components/music/MusicInsights.tsx
 "use client";
 
 import React, { useEffect, useState } from "react";
 import { MapPin, Loader2 } from "lucide-react";
-import type { MusicInsightsProps, CityInsight } from "@/types/insights";
+import type { MusicInsightsProps, CityInsight } from "../../types/insights";
 
 const InsightCard = ({ icon, text }: { icon: string; text: string }) => (
   <div className="bg-white/10 p-4 rounded-lg hover:bg-white/20 transition-all duration-300">
